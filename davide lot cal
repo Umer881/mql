@@ -1,0 +1,371 @@
+
+
+
+#property strict
+
+// --------------------------------------------------------------------
+// Include socket library, asking for event handling
+// --------------------------------------------------------------------
+
+#define SOCKET_LIBRARY_USE_EVENTS
+#include <socket-library-mt4-mt5.mqh>
+
+// --------------------------------------------------------------------
+// EA user inputs
+// --------------------------------------------------------------------
+
+input ushort   ServerPort = 41280;  // Server port
+
+
+// --------------------------------------------------------------------
+// Global variables and constants
+// --------------------------------------------------------------------
+
+// Frequency for EventSetMillisecondTimer(). Doesn't need to 
+// be very frequent, because it is just a back-up for the 
+// event-driven handling in OnChartEvent()
+#define TIMER_FREQUENCY_MS    1000
+
+// Server socket
+ServerSocket * glbServerSocket = NULL;
+
+// Array of current clients
+ClientSocket * glbClients[];
+
+// Watch for need to create timer;
+bool glbCreatedTimer = false;
+
+
+// --------------------------------------------------------------------
+// Initialisation - set up server socket
+// --------------------------------------------------------------------
+
+void OnInit()
+{
+
+
+
+
+
+
+
+
+
+
+   if (glbServerSocket) {
+      Print("Reloading EA with existing server socket");
+   } else {
+      // Create the server socket
+      glbServerSocket = new ServerSocket(ServerPort, false);
+      if (glbServerSocket.Created()) {
+         Print("Server socket created");
+   
+         // Note: this can fail if MT4/5 starts up
+         // with the EA already attached to a chart. Therefore,
+         // we repeat in OnTick()
+         glbCreatedTimer = EventSetMillisecondTimer(TIMER_FREQUENCY_MS);
+      } else {
+         Print("Server socket FAILED - is the port already in use?");
+      }
+   }
+}
+
+
+// --------------------------------------------------------------------
+// Termination - free server socket and any clients
+// --------------------------------------------------------------------
+
+void OnDeinit(const int reason)
+{
+   switch (reason) {
+      case REASON_CHARTCHANGE:
+         // Keep the server socket and all its clients if 
+         // the EA is going to be reloaded because of a 
+         // change to chart symbol or timeframe 
+         break;
+         
+      default:
+         // For any other unload of the EA, delete the 
+         // server socket and all the clients 
+         glbCreatedTimer = false;
+         
+         // Delete all clients currently connected
+         for (int i = 0; i < ArraySize(glbClients); i++) {
+            delete glbClients[i];
+         }
+         ArrayResize(glbClients, 0);
+      
+         // Free the server socket. *VERY* important, or else
+         // the port number remains in use and un-reusable until
+         // MT4/5 is shut down
+         delete glbServerSocket;
+         glbServerSocket = NULL;
+         Print("Server socket terminated");
+         break;
+   }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+void OnTimer()
+{
+   // Accept any new pending connections
+   AcceptNewConnections();
+   
+
+
+
+
+
+
+   for (int i = ArraySize(glbClients) - 1; i >= 0; i--) {
+      HandleSocketIncomingData(i);
+   }
+}
+
+
+// --------------------------------------------------------------------
+// Accepts new connections on the server socket, creating new
+// entries in the glbClients[] array
+// --------------------------------------------------------------------
+
+void AcceptNewConnections()
+{
+   // Keep accepting any pending connections until Accept() returns NULL
+   ClientSocket * pNewClient = NULL;
+   do {
+      pNewClient = glbServerSocket.Accept();
+      if (pNewClient != NULL) {
+         int sz = ArraySize(glbClients);
+         ArrayResize(glbClients, sz + 1);
+         glbClients[sz] = pNewClient;
+         Print("New client connection");
+         
+        
+      }
+      
+   } while (pNewClient != NULL);
+}
+
+
+
+
+
+
+
+
+
+
+void HandleSocketIncomingData(int idxClient)
+{
+   ClientSocket * pClient = glbClients[idxClient];
+
+
+
+bool bForceClose  ; // Client has sent a "close" message
+   string strCommand; 
+      bForceClose = false;
+      if (strCommand == "quote") {
+         pClient.Send( "Here is the quote");
+
+      } else if (strCommand == "close") {
+         bForceClose = true;
+
+      } 
+
+
+
+
+
+   
+
+
+
+   
+   do {
+      strCommand = pClient.Receive ();
+      
+      //Print("<- ", strCommand);
+      //pClient.Send( strCommand);
+      //
+      
+ //---
+ string to_split=strCommand;
+   ushort u_sep='_';            
+   string result[];              
+
+   int k=StringSplit(to_split,u_sep,result);
+   string v1,v3;
+   double v2,v4,v5,v6;
+if(k>3)
+     {
+      for(int i=0;i<k;i++)
+        
+        
+        {
+        if(i=0)
+        
+        
+          {
+           v1=result[i];
+          }
+          if(i=1)
+          {
+           v2=result[i];
+          }
+         
+         if(i=2)
+          {
+           v3=result[i];
+          }
+           if(i=3)
+          {
+           v4=result[i];
+          }
+           if(i=4)
+          {
+           v5=result[i];
+          }
+          if(i=5)
+          {
+           v6=result[i];
+          }
+         
+        }
+        int digits = MarketInfo(v3, MODE_DIGITS);
+        if(digits==3 )
+          {
+          double nTickValue = MarketInfo(v3, MODE_TICKVALUE);
+          nTickValue = nTickValue * 10;
+          
+            double pips=    (MathAbs(NormalizeDouble(v4-v5,digits)));
+            
+            pips = pips*100;
+            
+            double LotSize = (v2 * v6 / 100) / (pips * nTickValue);
+            string sls= DoubleToStr(LotSize,2);
+            //string Dataa = StringConcatenate(sls);
+            
+            pClient.Send(sls);
+            
+          }
+          
+          else if(digits==5 )
+          {
+          double nTickValue = MarketInfo(v3, MODE_TICKVALUE);
+          nTickValue = nTickValue * 10;
+          
+            double pips=    (MathAbs(NormalizeDouble(v4-v5,digits)));
+            pips = pips*10000;
+            
+            double LotSize = (v2 * v6 / 100) / (pips * nTickValue);
+            string sls= DoubleToStr(LotSize,2);
+            //string Dataa = StringConcatenate(sls));
+            
+            pClient.Send(sls);
+             
+          } 
+         
+          else if(digits==2 )
+          {
+          double nTickValue = MarketInfo(v3, MODE_TICKVALUE);
+          
+          nTickValue = nTickValue * 10;
+          
+            double pips=    (MathAbs(NormalizeDouble(v4-v5,digits)));
+            
+            pips = pips*10;double LotSize = (v2 * v6 / 100) / (pips * nTickValue);
+            string sls= DoubleToStr(LotSize,2);
+            //string Dataa = StringConcatenate(sls);
+            
+            pClient.Send(sls);
+           
+          } 
+         
+
+        Print(  v2+"actbal", " | " , v3+"pair", " | " , v4+"opprice", " | ", v5+"cppr", " | ",v6+"riskper");
+     }
+ 
+ 
+    
+ 
+     
+ 
+
+ //---
+     
+     
+
+ 
+   } while (strCommand != "");
+
+   // If the socket has been closed, or the client has sent a close message,
+   // release the socket and shuffle the glbClients[] array
+   if (!pClient.IsSocketConnected() || bForceClose) {
+      Print("Client has disconnected");
+
+      // Client is dead. Destroy the object
+      delete pClient;
+      
+      // And remove from the array
+      int ctClients = ArraySize(glbClients);
+      for (int i = idxClient + 1; i < ctClients; i++) {
+         glbClients[i - 1] = glbClients[i];
+      }
+      ctClients--;
+      ArrayResize(glbClients, ctClients);
+   }
+}
+
+
+// --------------------------------------------------------------------
+// Use OnTick() to watch for failure to create the timer in OnInit()
+// --------------------------------------------------------------------
+
+void OnTick()
+{
+   if (!glbCreatedTimer) glbCreatedTimer = EventSetMillisecondTimer(TIMER_FREQUENCY_MS);
+}
+
+
+
+
+
+
+void OnChartEvent(const int id, const long& lparam, const double& dparam, const string& sparam)
+{
+   if (id == CHARTEVENT_KEYDOWN) {
+      // If the lparam matches a .GetSocketHandle(), then it's a dummy
+      // key press indicating that there's socket activity. Otherwise,
+      // it's a real key press
+         
+      if (lparam == glbServerSocket.GetSocketHandle()) {
+         // Activity on server socket. Accept new connections
+         Print("New server socket event - incoming connection");
+         AcceptNewConnections();
+
+      } else {
+         // Compare lparam to each client socket handle
+         for (int i = 0; i < ArraySize(glbClients); i++) {
+            if (lparam == glbClients[i].GetSocketHandle()) {
+               HandleSocketIncomingData(i);
+               return; // Early exit
+            }
+         }
+         
+         // If we get here, then the key press does not seem
+         // to match any socket, and appears to be a real
+         // key press event...
+      }
+   }
+}
