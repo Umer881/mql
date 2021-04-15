@@ -1,0 +1,60 @@
+#property version       "1.10"
+#property strict
+
+int handle1;
+
+//+------------------------------------------------------------------+
+//| Initialization function of the expert                            |
+//+------------------------------------------------------------------+
+int OnInit()
+{
+   handle1=iCustom(_Symbol, 0, "LTD by KDMfx");
+return(INIT_SUCCEEDED);
+}
+//+------------------------------------------------------------------+
+//| Deinitialization function of the expert                          |
+//+------------------------------------------------------------------+
+void OnDeinit(const int reason)
+{
+   IndicatorRelease(handle1);
+}
+//+------------------------------------------------------------------+
+//| "Tick" event handle1r function                                    |
+//+------------------------------------------------------------------+
+void OnTick()
+{
+ 
+   double LTDindicator1[],
+          LTDindicator2[],
+          LTDindicator3[],
+          LTDindicator4[];
+                           
+   ArraySetAsSeries(LTDindicator1, true);   
+   ArraySetAsSeries(LTDindicator2, true);   
+   ArraySetAsSeries(LTDindicator3, true);   
+   ArraySetAsSeries(LTDindicator4, true);
+            
+   CopyBuffer(handle1, 0, 0, 85, LTDindicator1);
+   CopyBuffer(handle1, 1, 0, 85, LTDindicator2);
+   CopyBuffer(handle1, 2, 0, 85, LTDindicator3);
+   CopyBuffer(handle1, 3, 0, 75, LTDindicator4);
+   
+   double val1= LTDindicator1[candle] ;
+   double val2= LTDindicator2[candle] ;
+   double val3= LTDindicator3[candle] ;
+   double val4= LTDindicator4[candle] ;
+   
+   if(val1>val2 && val3==2.0)
+     {
+      check="UP";
+     }
+   else if(val1<val2 && val3==2.0)
+     {
+      check="DN";
+     }
+   else
+     {
+      check="a";
+     }
+return;
+}
