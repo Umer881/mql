@@ -1,0 +1,460 @@
+ 
+ 
+
+#include <stdlib.mqh>
+#include <stderror.mqh>
+ string tempFileName="Trend.txt";
+//--- indicator settings
+#property indicator_chart_window
+#property indicator_buffers 2
+
+#property indicator_type1 DRAW_ARROW
+#property indicator_width1 1
+#property indicator_color1 0x1AFF00
+#property indicator_label1 "Buy"
+
+#property indicator_type2 DRAW_ARROW
+#property indicator_width2 1
+#property indicator_color2 0xFFAA00
+#property indicator_label2 "Buy"
+
+//--- indicator buffers
+double Buffer1[];
+double Buffer2[];
+  double open1,open2,open3,open4,close1,close2,close3,close4,high1,high2,high3,high4,low1,low2,low3,low4;
+
+double myPoint; //initialized in OnInit
+
+void myAlert(string type, string message)
+  {
+   if(type == "print")
+      Print(message);
+   else if(type == "error")
+     {
+      Print(type+" | Joe 4 Candles @ "+Symbol()+","+IntegerToString(Period())+" | "+message);
+     }
+   else if(type == "order")
+     {
+     }
+   else if(type == "modify")
+     {
+     }
+  }
+
+//+------------------------------------------------------------------+
+//| Custom indicator initialization function                         |
+//+------------------------------------------------------------------+
+int OnInit()
+  {   
+ObjectsDeleteAll();
+ 
+ 
+ 
+ 
+ 
+ string strArr[1];
+
+int handle = FileOpen(tempFileName,FILE_READ|FILE_TXT,0,CP_UTF8); 
+ 
+FileSeek(handle,0,SEEK_SET);
+int si=0;
+while(!FileIsEnding(handle))
+{
+	if(si>ArraySize(strArr)) { Comment("error: increase size of strArr"); ExpertRemove(); }
+	strArr[si] = FileReadString(handle,0);
+	si++;
+}
+
+FileClose(handle);
+
+
+// here are variables one after another, order and type are important, triple-check it
+string varLotsBuy = (string)strArr[0];
+
+
+
+  if(varLotsBuy=="9201015116085")
+    { 
+ 
+  for(int i=0;i<500;i++)
+   {
+      open1 = Open [1+i];
+      open2 = Open [2+i];
+      open3 = Open [3+i];
+      open4 = Open [4+i];
+      close1= Close[1+i];
+      close2= Close[2+i];
+      close3= Close[3+i];
+      close4= Close[4+i];
+      high1 = High [1+i];
+      high2 = High [2+i];
+      high3 = High [3+i];
+      high4 = High [4+i];
+      low1  = Low  [1+i];
+      low2  = Low  [2+i];
+      low3  = Low  [3+i];
+      low4  = Low  [4+i];
+
+      
+      //Bullish Scenario 1
+      
+         if(
+               open3<close3 //candle 3 is bull
+            && open2<close2 //candle 2 is bull
+            
+            && close1<high3 //candle 1 close is below high3
+            && close1>low3  //candle 1 didnt close below low3
+             
+            && close2>low3 // no candle closed below low 3
+            
+             )
+           {
+           
+            ObjectCreate(0, "rect"+i,OBJ_RECTANGLE,0,Time[i+3],High[i+3],Time[i+2],Low[i+3]);
+            ObjectSetInteger(0,"rect"+i,OBJPROP_COLOR,clrLightBlue);
+            ObjectSetInteger(0,"rect"+i,OBJPROP_STYLE,STYLE_DASH);
+            ObjectSetInteger(0,"rect"+i,OBJPROP_WIDTH,1);
+            ObjectSetInteger(0,"rect"+i,OBJPROP_FILL,true);
+            ObjectSetInteger(0,"rect"+i,OBJPROP_BACK,false);
+           }
+
+           else if(
+               open3>close3 //candle 3 is bull
+            && open2>close2 //candle 2 is bull
+            
+            && close1>low3 //candle 1 close is below high3
+            && close1<high3  //candle 1 didnt close below low3
+             
+            && close2<high3 // no candle closed below low 3
+            
+             )
+                {
+            ObjectCreate(0, "rect"+i,OBJ_RECTANGLE,0,Time[i+3],High[i+3],Time[i+2],Low[i+3]);
+            ObjectSetInteger(0,"rect"+i,OBJPROP_COLOR,clrTomato);
+            ObjectSetInteger(0,"rect"+i,OBJPROP_STYLE,STYLE_DASH);
+            ObjectSetInteger(0,"rect"+i,OBJPROP_WIDTH,1);
+            ObjectSetInteger(0,"rect"+i,OBJPROP_FILL,true);
+            ObjectSetInteger(0,"rect"+i,OBJPROP_BACK,true);
+                }
+                
+                
+                
+                
+         else if(
+               open4<close4 //candle 3 is bull
+            && open3<close3 //candle 2 is bull
+            && close2>high4
+            && close1<high4 //candle 1 close is below high3
+            && close1>low4  //candle 1 didnt close below low3
+            && close2>low4 
+            && close3>low4 // no candle closed below low 3
+            
+             )
+           {
+           
+            ObjectCreate(0, "rect"+i,OBJ_RECTANGLE,0,Time[i+4],High[i+4],Time[i+3],Low[i+4]);
+            ObjectSetInteger(0,"rect"+i,OBJPROP_COLOR,clrLightBlue);
+            ObjectSetInteger(0,"rect"+i,OBJPROP_STYLE,STYLE_DASH);
+            ObjectSetInteger(0,"rect"+i,OBJPROP_WIDTH,1);
+            ObjectSetInteger(0,"rect"+i,OBJPROP_FILL,true);
+            ObjectSetInteger(0,"rect"+i,OBJPROP_BACK,false);
+           }                
+                
+                
+                
+                
+                
+       else if(
+               open4>close4 //candle 3 is bull
+            && open3>close3 //candle 2 is bull
+            
+            && close2<low4
+            
+            && close1>low4 //candle 1 close is below high3
+            
+            && close1<high4  //candle 1 didnt close below low3
+            
+            && close2<high4 
+            && close3<high4 // no candle closed below low 3
+            
+             )
+           {
+           
+            ObjectCreate(0, "rect"+i,OBJ_RECTANGLE,0,Time[i+4],High[i+4],Time[i+3],Low[i+4]);
+            ObjectSetInteger(0,"rect"+i,OBJPROP_COLOR,clrLightBlue);
+            ObjectSetInteger(0,"rect"+i,OBJPROP_STYLE,STYLE_DASH);
+            ObjectSetInteger(0,"rect"+i,OBJPROP_WIDTH,1);
+            ObjectSetInteger(0,"rect"+i,OBJPROP_FILL,true);
+            ObjectSetInteger(0,"rect"+i,OBJPROP_BACK,false);
+           }  
+ 
+     }
+ 
+ 
+       }
+      else
+  {
+   Alert ("Password incorrect" );
+  }
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+   
+   return(INIT_SUCCEEDED);
+  }
+  int OnDeinit()
+      {ObjectsDeleteAll();
+     
+       
+      }
+//+------------------------------------------------------------------+
+//| Custom indicator iteration function                              |
+//+------------------------------------------------------------------+
+int OnCalculate(const int rates_total,
+                const int prev_calculated,
+                const datetime& time[],
+                const double& open[],
+                const double& high[],
+                const double& low[],
+                const double& close[],
+                const long& tick_volume[],
+                const long& volume[],
+                const int& spread[])
+  {
+   int limit = rates_total - prev_calculated;
+   //--- counting from 0 to rates_total
+   ArraySetAsSeries(Buffer1, true);
+   ArraySetAsSeries(Buffer2, true);
+   //--- initial zero
+   if(prev_calculated < 1)
+     {
+      ArrayInitialize(Buffer1, EMPTY_VALUE);
+      ArrayInitialize(Buffer2, EMPTY_VALUE);
+     }
+   else
+      limit++;
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+int BarsCount = 0;
+if (Bars>BarsCount) {
+
+
+
+
+
+ string strArr[1];
+
+int handle = FileOpen(tempFileName,FILE_READ|FILE_TXT,0,CP_UTF8); 
+ 
+FileSeek(handle,0,SEEK_SET);
+int si=0;
+while(!FileIsEnding(handle))
+{
+	if(si>ArraySize(strArr)) { Comment("error: increase size of strArr"); ExpertRemove(); }
+	strArr[si] = FileReadString(handle,0);
+	si++;
+}
+
+FileClose(handle);
+
+
+// here are variables one after another, order and type are important, triple-check it
+string varLotsBuy = (string)strArr[0];
+
+
+
+  if(varLotsBuy=="9201015116085")
+    {
+
+
+
+
+      
+      
+     string message; 
+      
+      
+      
+      
+           open1 = Open [1 ];
+      open2 = Open [2];
+      open3 = Open [3];
+      open4 = Open [4];
+      close1= Close[1];
+      close2= Close[2];
+      close3= Close[3];
+      close4= Close[4];
+      high1 = High [1];
+      high2 = High [2];
+      high3 = High [3];
+      high4 = High [4];
+      low1  = Low  [1];
+      low2  = Low  [2];
+      low3  = Low  [3];
+      low4  = Low  [4];
+
+      
+      //Bullish Scenario 1
+      
+         if(
+               open3<close3 //candle 3 is bull
+            && open2<close2 //candle 2 is bull
+            
+            && close1<high3 //candle 1 close is below high3
+            && close1>low3  //candle 1 didnt close below low3
+             
+            && close2>low3 // no candle closed below low 3
+            
+             )
+           {
+           
+            ObjectCreate(0, "rect"+Time[3],OBJ_RECTANGLE,0,Time[3],High[3],Time[2],Low[3]);
+            ObjectSetInteger(0,"rect",OBJPROP_COLOR,clrLightBlue);
+            ObjectSetInteger(0,"rect",OBJPROP_STYLE,STYLE_DASH);
+            ObjectSetInteger(0,"rect",OBJPROP_WIDTH,1);
+            ObjectSetInteger(0,"rect",OBJPROP_FILL,true);
+            ObjectSetInteger(0,"rect",OBJPROP_BACK,false);
+            
+            
+            
+            Alert("Symbol: ", Symbol(),   "   TF: ", Period(), "  High: " , high3, "  Low: ",low3);
+            message = StringConcatenate("Symbol: ",Symbol(),   "   TF: ", Period(), "  High: " , high3, "  Low: ",low3);
+            SendNotification(message);
+           }
+
+           else if(
+               open3>close3 //candle 3 is bull
+            && open2>close2 //candle 2 is bull
+            
+            && close1>low3 //candle 1 close is below high3
+            && close1<high3  //candle 1 didnt close below low3
+             
+            && close2<high3 // no candle closed below low 3
+            
+             )
+                {
+            ObjectCreate(0, "rect"+Time[3],OBJ_RECTANGLE,0,Time[3],High[3],Time[2],Low[3]);
+            ObjectSetInteger(0,"rect",OBJPROP_COLOR,clrTomato);
+            ObjectSetInteger(0,"rect",OBJPROP_STYLE,STYLE_DASH);
+            ObjectSetInteger(0,"rect",OBJPROP_WIDTH,1);
+            ObjectSetInteger(0,"rect",OBJPROP_FILL,true);
+            ObjectSetInteger(0,"rect",OBJPROP_BACK,true);
+            
+            
+            Alert("Symbol: ", Symbol(),   "   TF: ", Period(), "  High: " , high3, "  Low: ",low3);
+            message = StringConcatenate("Symbol: ",Symbol(),   "   TF: ", Period(), "  High: " , high3, "  Low: ",low3);
+            SendNotification(message);
+                }
+                
+                
+                
+                
+         else if(
+               open4<close4 //candle 3 is bull
+            && open3<close3 //candle 2 is bull
+            && close2>high4
+            && close1<high4 //candle 1 close is below high3
+            && close1>low4  //candle 1 didnt close below low3
+            && close2>low4 
+            && close3>low4 // no candle closed below low 3
+            
+             )
+           {
+           
+            ObjectCreate(0, "rect"+Time[3],OBJ_RECTANGLE,0,Time[4],High[4],Time[3],Low[4]);
+            ObjectSetInteger(0,"rect",OBJPROP_COLOR,clrLightBlue);
+            ObjectSetInteger(0,"rect",OBJPROP_STYLE,STYLE_DASH);
+            ObjectSetInteger(0,"rect",OBJPROP_WIDTH,1);
+            ObjectSetInteger(0,"rect",OBJPROP_FILL,true);
+            ObjectSetInteger(0,"rect",OBJPROP_BACK,false);
+                        Alert("Symbol: ", Symbol(),   "   TF: ", Period(), "  High: " , high4, "  Low: ",low4);
+            message = StringConcatenate("Symbol: ",Symbol(),   "   TF: ", Period(), "  High: " , high4, "  Low: ",low4);
+            SendNotification(message);
+           }                
+                
+                
+                
+                
+                
+       else if(
+               open4>close4 //candle 3 is bull
+            && open3>close3 //candle 2 is bull
+            
+            && close2<low4
+            
+            && close1>low4 //candle 1 close is below high3
+            
+            && close1<high4  //candle 1 didnt close below low3
+            
+            && close2<high4 
+            && close3<high4 // no candle closed below low 3
+            
+             )
+           {
+           
+            ObjectCreate(0, "rect"+Time[3],OBJ_RECTANGLE,0,Time[4],High[4],Time[3],Low[4]);
+            ObjectSetInteger(0,"rect",OBJPROP_COLOR,clrLightBlue);
+            ObjectSetInteger(0,"rect",OBJPROP_STYLE,STYLE_DASH);
+            ObjectSetInteger(0,"rect",OBJPROP_WIDTH,1);
+            ObjectSetInteger(0,"rect",OBJPROP_FILL,true);
+            ObjectSetInteger(0,"rect",OBJPROP_BACK,false);
+                        Alert("Symbol: ", Symbol(),   "   TF: ", Period(), "  High: " , high4, "  Low: ",low4);
+            message = StringConcatenate("Symbol: ",Symbol(),   "   TF: ", Period(), "  High: " , high4, "  Low: ",low4);
+            SendNotification(message);            
+           }   
+      }
+      else
+  {
+   Alert ("Password incorrect" );
+  }
+}BarsCount = Bars;      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+
+   return(rates_total);
+  }
+
+
+
+ 
+
+
+//+------------------------------------------------------------------+
